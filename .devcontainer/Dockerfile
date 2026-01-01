@@ -86,7 +86,18 @@ RUN git clone --recursive https://github.com/Shark-ML/Shark.git /tmp/Shark && \
     make install && \
     ldconfig && \
     rm -rf /tmp/Shark
+    
+# Configure Environment for C++ LibTorch
+# Set the Torch path for CMake so find_package(Torch) works automatically
+RUN python3 -c "import torch; import os; print(os.path.join(torch.utils.cmake_prefix_path, 'Torch'))" > /tmp/torch_dir && \
+    export TORCH_PATH=$(cat /tmp/torch_dir) && \
+    echo "Using Torch at: $TORCH_PATH"
 
+# We must use ENV to make it persistent for the user session
+# Note: The path below is the standard location for pip installs on Ubuntu.
+# If the dynamic check above gives a different path, use that instead.
+ENV Torch_DIR=/usr/local/lib/python3.10/dist-packages/torch/share/cmake/Torch
+ENV LD_LIBRARY_PATH=/usr/local/lib/python3.10/dist-packages/torch/lib:$LD_LIBRARY_PATH
 # 7. USER SETUP & ENVIRONMENT
 ARG USER_ID=1000
 ARG GROUP_ID=1000
