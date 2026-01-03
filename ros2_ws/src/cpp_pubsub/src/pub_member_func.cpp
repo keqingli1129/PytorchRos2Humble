@@ -20,9 +20,15 @@ public:
     publisher_ = this->create_publisher<std_msgs::msg::String>("topic", 10);
     image_publisher_ = this->create_publisher<sensor_msgs::msg::Image>("image_topic", 10);
     // 2. Open Camera (0 is usually the webcam)
-    cap_.open(0, cv::CAP_V4L2);
-    if (!cap_.isOpened()) {
-      RCLCPP_ERROR(this->get_logger(), "Could not open video stream");
+    // This pipeline string mimics exactly what worked for you in the terminal
+    std::string pipeline = "v4l2src device=/dev/video0 ! videoconvert ! appsink";
+
+    // Open using the GSTREAMER backend
+    cap_.open(pipeline, cv::CAP_GSTREAMER);
+
+    if(!cap_.isOpened()) {
+        // This should NOT happen now since the CLI worked
+        RCLCPP_ERROR(this->get_logger(), "GStreamer pipeline failed to open!");
     }
     timer_ = this->create_wall_timer(
       500ms, std::bind(&MinimalPublisher::timer_callback, this));
