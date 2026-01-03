@@ -5,6 +5,9 @@
 #include <iostream>
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
+#include "sensor_msgs/msg/image.hpp"
+#include "cv_bridge/cv_bridge.h"
+#include <opencv2/opencv.hpp>
 
 using namespace std::chrono_literals;
 
@@ -15,8 +18,16 @@ public:
   : Node("minimal_publisher"), count_(0)
   {     
     publisher_ = this->create_publisher<std_msgs::msg::String>("topic", 10);
+    image_publisher_ = this->create_publisher<sensor_msgs::msg::Image>("image_topic", 10);
+    // 2. Open Camera (0 is usually the webcam)
+    cap_.open(0, cv::CAP_V4L2);
+    if (!cap_.isOpened()) {
+      RCLCPP_ERROR(this->get_logger(), "Could not open video stream");
+    }
     timer_ = this->create_wall_timer(
       500ms, std::bind(&MinimalPublisher::timer_callback, this));
+      image_timer_ = this->create_wall_timer(
+      100ms, std::bind(&MinimalPublisher::image_timer_callback, this));
   }
 
   void timer_callback()
@@ -27,10 +38,29 @@ public:
     publisher_->publish(message);
   }
 
+  void image_timer_callback()
+  {
+    cv::Mat frame;
+    cap_ >> frame;
+    if (frame.empty()) {
+      RCLCPP_WARN(this->get_logger(), "Empty frame captured");
+      return;
+    }
+    // 5. Convert OpenCV -> ROS Message
+    std_msgs::msg::Header header;
+    header.stamp = this->get_clock()->now();
+    header.frame_id = "camera_frame";
+    auto msg = cv_bridge::CvImage(header, "bgr8", frame).toImageMsg();
+    image_publisher_->publish(*msg);
+  }
+
 private:
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
+  rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_publisher_;
   rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::TimerBase::SharedPtr image_timer_;
   size_t count_;
+  cv::VideoCapture cap_;
 };
 
 int main(int argc, char * argv[])
