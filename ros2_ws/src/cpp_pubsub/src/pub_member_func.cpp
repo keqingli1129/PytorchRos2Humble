@@ -8,6 +8,7 @@
 #include "sensor_msgs/msg/image.hpp"
 #include "cv_bridge/cv_bridge.h"
 #include <opencv2/opencv.hpp>
+#include "cxx_utils_pkg/cxx_utils.hpp"
 
 using namespace std::chrono_literals;
 
@@ -37,6 +38,9 @@ if(!cap_.isOpened()) {
     RCLCPP_ERROR(this->get_logger(), "Failed to open /dev/video2 via V4L2!");
     return;
 }
+
+    // Call the test_libtorch function from cxx_utils_pkg
+    cxx_utils_pkg::CxxUtils::test_libtorch();
 
     timer_ = this->create_wall_timer(
       500ms, std::bind(&MinimalPublisher::timer_callback, this));

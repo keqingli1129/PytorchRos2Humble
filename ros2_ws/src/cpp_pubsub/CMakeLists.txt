@@ -15,11 +15,17 @@ find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(OpenCV REQUIRED)
-
+find_package(cxx_utils_pkg REQUIRED)
+find_package(Torch REQUIRED) 
 add_executable(talker src/pub_member_func.cpp)
 ament_target_dependencies(talker rclcpp std_msgs sensor_msgs cv_bridge OpenCV)
+target_link_libraries(talker cxx_utils_pkg::cxx_utils)
+# --- CRITICAL: Ensure linker knows where Torch is ---
+# You don't need to link ${TORCH_LIBRARIES} here if cxx_utils did it PUBLICly,
+# BUT you might need to help the linker find the directory.
+target_link_directories(talker PUBLIC ${TORCH_LIBRARY_DIRS})
 add_executable(listener src/sub_member_func.cpp)  
-ament_target_dependencies(listener rclcpp std_msgs )
+ament_target_dependencies(listener rclcpp std_msgs)
 install(TARGETS
   talker
   listener
