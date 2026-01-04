@@ -21,15 +21,23 @@ public:
     image_publisher_ = this->create_publisher<sensor_msgs::msg::Image>("image_topic", 10);
     // 2. Open Camera (0 is usually the webcam)
     // This pipeline string mimics exactly what worked for you in the terminal
-    std::string pipeline = "v4l2src device=/dev/video0 ! videoconvert ! appsink";
+    std::string pipeline = "v4l2src device=/dev/video2 ! videoconvert ! appsink";
 
     // Open using the GSTREAMER backend
-    cap_.open(pipeline, cv::CAP_GSTREAMER);
+    //cap_.open(pipeline, cv::CAP_GSTREAMER);
+    cap_.open(2, cv::CAP_V4L2);
 
-    if(!cap_.isOpened()) {
-        // This should NOT happen now since the CLI worked
-        RCLCPP_ERROR(this->get_logger(), "GStreamer pipeline failed to open!");
-    }
+    // Force the resolution to match your OBS Canvas EXACTLY (e.g., 1920x1080)
+    cap_.set(cv::CAP_PROP_FRAME_WIDTH, 1920);
+    cap_.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
+    // Optional: Force MJPG if YUYV fails
+    // cap_.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
+
+if(!cap_.isOpened()) {
+    RCLCPP_ERROR(this->get_logger(), "Failed to open /dev/video2 via V4L2!");
+    return;
+}
+
     timer_ = this->create_wall_timer(
       500ms, std::bind(&MinimalPublisher::timer_callback, this));
       image_timer_ = this->create_wall_timer(

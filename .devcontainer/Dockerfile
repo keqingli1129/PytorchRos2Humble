@@ -129,5 +129,5 @@ WORKDIR /workspace
 
 # Source ROS 2 in the user's bashrc so it loads automatically
 RUN echo "source /opt/ros/humble/setup.bash" >> /home/ethanli/.bashrc
-
+RUN echo "alias build='cd /workspaces/PytorchRos2Humble/ros2_ws && colcon build --symlink-install && source install/setup.bash '" >> /home/ethanli/.bashrc
 CMD ["/bin/bash"]

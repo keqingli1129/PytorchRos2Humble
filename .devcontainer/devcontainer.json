@@ -6,7 +6,10 @@
 		"dockerfile": "Dockerfile"
 	},
 	"runArgs": [
-		"--device", "/dev/video0",
+		"--device=/dev/video0",
+    	"--device=/dev/video1",
+    	"--device=/dev/video2",
+    	"--group-add=video",
         "--net=host",
         "--gpus", "all",
         "-e", "DISPLAY=${env:DISPLAY}", 
