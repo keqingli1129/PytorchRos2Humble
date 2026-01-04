@@ -109,11 +109,19 @@ RUN python3 -c "import torch; import os; print(os.path.join(torch.utils.cmake_pr
     export TORCH_PATH=$(cat /tmp/torch_dir) && \
     echo "Using Torch at: $TORCH_PATH"
 
-# We must use ENV to make it persistent for the user session
-# Note: The path below is the standard location for pip installs on Ubuntu.
-# If the dynamic check above gives a different path, use that instead.
-ENV Torch_DIR=/usr/local/lib/python3.10/dist-packages/torch/share/cmake/Torch
-ENV LD_LIBRARY_PATH=/usr/local/lib/python3.10/dist-packages/torch/lib:$LD_LIBRARY_PATH
+# ==============================================================================
+# INSTALL LIBTORCH (C++11 ABI)
+# Matches CUDA 11.8 and ROS 2 Humble's C++ standard
+# ==============================================================================
+WORKDIR /tmp
+RUN wget -q https://download.pytorch.org/libtorch/cu118/libtorch-cxx11-abi-shared-with-deps-2.4.1%2Bcu118.zip -O libtorch.zip && \
+    unzip -q libtorch.zip -d /usr/local && \
+    rm libtorch.zip
+
+# Set environment variables for CMake to find it automatically
+ENV Torch_DIR=/usr/local/libtorch
+ENV LD_LIBRARY_PATH=/usr/local/libtorch/lib:$LD_LIBRARY_PATH
+ENV CMAKE_PREFIX_PATH=/usr/local/libtorch:$CMAKE_PREFIX_PATH
 # 7. USER SETUP & ENVIRONMENT
 ARG USER_ID=1000
 ARG GROUP_ID=1000
